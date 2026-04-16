@@ -19,11 +19,17 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Store connected users
+// Store connected users and rooms
 let users = {};
+let rooms = {
+  "General": { name: "General", createdBy: "System", members: 0 },
+  "Tech Talk": { name: "Tech Talk", createdBy: "System", members: 0 },
+  "Music": { name: "Music", createdBy: "System", members: 0 }
+};
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
+  let currentRoom = null;
 
   socket.on('login', (username) => {
     users[socket.id] = {
@@ -31,37 +37,85 @@ io.on('connection', (socket) => {
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
     };
     
-    // Broadcast updated user list
-    io.emit('user_list', Object.values(users));
-    
-    // Notify others
-    socket.broadcast.emit('system_message', {
-      text: `${username} joined the Sky`,
-      type: 'join'
-    });
+    // Send room list once logged in
+    socket.emit('room_list', Object.values(rooms));
   });
 
-  socket.on('send_message', (data) => {
-    const messageData = {
-      user: users[socket.id],
-      text: data.text,
-      image: data.image,
-      audio: data.audio,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      id: Date.now()
-    };
-    io.emit('receive_message', messageData);
+  socket.on('get_rooms', () => {
+    socket.emit('room_list', Object.values(rooms));
+  });
+
+  socket.on('create_room', (roomName) => {
+    if (!rooms[roomName]) {
+      rooms[roomName] = { 
+        name: roomName, 
+        createdBy: users[socket.id]?.username || "Unknown",
+        members: 0 
+      };
+      io.emit('room_list', Object.values(rooms));
+    }
+  });
+
+  socket.on('join_room', (roomName) => {
+    if (currentRoom) {
+      socket.leave(currentRoom);
+      if (rooms[currentRoom]) rooms[currentRoom].members--;
+    }
+    
+    socket.join(roomName);
+    currentRoom = roomName;
+    if (rooms[roomName]) rooms[roomName].members++;
+    
+    // Broadcast updated member counts
+    io.emit('room_list', Object.values(rooms));
+    
+    // Notify room members
+    socket.to(roomName).emit('system_message', {
+      text: `${users[socket.id]?.username} joined the room`,
+      type: 'join'
+    });
+    
+    socket.emit('room_joined', rooms[roomName]);
+  });
+
+  socket.on('send_message', (data, callback) => {
+    try {
+      const messageData = {
+        user: users[socket.id],
+        text: data.text,
+        image: data.image,
+        audio: data.audio,
+        room: data.room,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        id: data.id || Date.now()
+      };
+      
+      // Emit ONLY to the specific room
+      io.to(data.room).emit('receive_message', messageData);
+      
+      if (typeof callback === 'function') {
+        callback({ status: 'ok', id: messageData.id });
+      }
+    } catch (err) {
+      console.error("Error broadcast message:", err);
+      if (typeof callback === 'function') {
+        callback({ status: 'error', message: 'Server failed to relay message' });
+      }
+    }
   });
 
   socket.on('disconnect', () => {
     if (users[socket.id]) {
       const username = users[socket.id].username;
+      if (currentRoom && rooms[currentRoom]) {
+        rooms[currentRoom].members--;
+        socket.to(currentRoom).emit('system_message', {
+          text: `${username} left the room`,
+          type: 'leave'
+        });
+      }
       delete users[socket.id];
-      io.emit('user_list', Object.values(users));
-      io.emit('system_message', {
-        text: `${username} left the Sky`,
-        type: 'leave'
-      });
+      io.emit('room_list', Object.values(rooms));
     }
     console.log('User disconnected');
   });

@@ -32,14 +32,29 @@
     <!-- Main Chat Window -->
     <div id="chat-container" class="glass-panel hidden">
         <header>
+            <button id="back-to-rooms" class="hidden text-btn">❮ Rooms</button>
             <div class="header-logo">
-                <span class="logo-icon">☁️</span>
-                <span>SkyChat</span>
+                <span id="logo-icon" class="logo-icon">☁️</span>
+                <span id="header-title">SkyChat</span>
             </div>
             <div id="online-count" class="badge">0 Online</div>
             <div id="status-dot" class="status-dot online"></div>
             <button id="show-users-btn">👥</button>
         </header>
+
+        <!-- Room Browser -->
+        <div id="room-browser" class="hidden">
+            <div class="browser-header">
+                <h2>Communities</h2>
+                <div class="create-room-box">
+                    <input type="text" id="new-room-name" placeholder="New room name..." maxlength="20">
+                    <button id="create-room-btn">+</button>
+                </div>
+            </div>
+            <div id="room-list" class="room-grid">
+                <!-- Room cards will be injected here -->
+            </div>
+        </div>
 
         <aside id="user-list-panel" class="glass-panel hidden">
             <h3>Online in Sky</h3>
@@ -47,11 +62,11 @@
             <button id="close-users-btn">×</button>
         </aside>
 
-        <main id="chat-messages">
+        <main id="chat-messages" class="hidden">
             <!-- Messages go here -->
         </main>
 
-        <footer>
+        <footer id="chat-footer" class="hidden">
             <div id="recording-status" class="hidden">
                 <span class="pulse-dot"></span>
                 <span id="recording-timer">00:00</span>

@@ -20,8 +20,17 @@ const recordingTimer = document.getElementById('recording-timer');
 const audioPreview = document.getElementById('audio-preview');
 const previewPlayer = document.getElementById('preview-player');
 const deletePreview = document.getElementById('delete-preview');
+const roomBrowser = document.getElementById('room-browser');
+const roomList = document.getElementById('room-list');
+const chatMessages = document.getElementById('chat-messages');
+const chatFooter = document.getElementById('chat-footer');
+const backToRoomsBtn = document.getElementById('back-to-rooms');
+const headerTitle = document.getElementById('header-title');
+const newRoomInput = document.getElementById('new-room-name');
+const createRoomBtn = document.getElementById('create-room-btn');
 
 let currentUser = null;
+let currentRoom = null;
 let mediaRecorder = null;
 let audioChunks = [];
 let recordingInterval = null;
@@ -34,9 +43,25 @@ loginForm.addEventListener('submit', (e) => {
     const name = usernameInput.value.trim();
     if (name) {
         currentUser = name;
+        console.log('Logging in as:', name);
         socket.emit('login', name);
+        
+        // Switch UI
         loginContainer.classList.add('hidden');
         chatContainer.classList.remove('hidden');
+        roomBrowser.classList.remove('hidden');
+        chatMessages.classList.add('hidden');
+        chatFooter.classList.add('hidden');
+        backToRoomsBtn.classList.add('hidden');
+        headerTitle.textContent = 'SkyChat';
+        
+        // Hide chat-specific header tools on room browser
+        onlineCount.classList.add('hidden');
+        statusDot.classList.add('hidden');
+        showUsersBtn.classList.add('hidden');
+        
+        // Explicitly request rooms just in case login emit was too fast
+        socket.emit('get_rooms');
     }
 });
 
@@ -44,13 +69,38 @@ loginForm.addEventListener('submit', (e) => {
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = messageInput.value.trim();
+    if (!currentRoom) return;
+
+    const tempId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
-    if (pendingAudioData) {
-        console.log(`Sending audio message, size: ${Math.round(pendingAudioData.length / 1024)} KB`);
-        socket.emit('send_message', { text, audio: pendingAudioData });
+    if (pendingAudioData || text) {
+        const pendingData = {
+            id: tempId,
+            user: { username: currentUser, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser}` },
+            text: text,
+            audio: pendingAudioData,
+            room: currentRoom,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isPending: true
+        };
+        
+        appendMessage(pendingData);
+        
+        const currentAudio = pendingAudioData;
         clearPreview();
-    } else if (text) {
-        socket.emit('send_message', { text });
+
+        const timeout = setTimeout(() => {
+            markMessageError(tempId);
+        }, 15000);
+
+        socket.emit('send_message', { id: tempId, text, audio: currentAudio, room: currentRoom }, (response) => {
+            clearTimeout(timeout);
+            if (response && response.status === 'ok') {
+                markMessageSuccess(tempId);
+            } else {
+                markMessageError(tempId);
+            }
+        });
     }
     
     if (text) {
@@ -58,6 +108,95 @@ messageForm.addEventListener('submit', (e) => {
         autoResize(messageInput);
     }
 });
+
+function markMessageSuccess(id) {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) {
+        el.classList.remove('pending');
+    }
+}
+
+function markMessageError(id) {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) {
+        el.classList.remove('pending');
+        el.classList.add('sent-error');
+        const body = el.querySelector('.msg-header');
+        if (body) body.innerHTML += ' <span class="error-text" style="background:none; margin:0; padding:0; display:inline">⚠️ Failed</span>';
+    }
+}
+
+// Room logic
+createRoomBtn.addEventListener('click', () => {
+    const name = newRoomInput.value.trim();
+    if (name) {
+        socket.emit('create_room', name);
+        newRoomInput.value = '';
+    }
+});
+
+backToRoomsBtn.addEventListener('click', () => {
+    currentRoom = null;
+    roomBrowser.classList.remove('hidden');
+    chatMessages.classList.add('hidden');
+    chatFooter.classList.add('hidden');
+    backToRoomsBtn.classList.add('hidden');
+    headerTitle.textContent = 'SkyChat';
+    
+    // Hide chat tools when returning to list
+    onlineCount.classList.add('hidden');
+    statusDot.classList.add('hidden');
+    showUsersBtn.classList.add('hidden');
+});
+
+socket.on('room_list', (rooms) => {
+    console.log('Received room list:', rooms);
+    renderRoomList(rooms);
+});
+
+socket.on('room_joined', (room) => {
+    console.log('Joined room:', room.name);
+    currentRoom = room.name;
+    headerTitle.textContent = room.name;
+    roomBrowser.classList.add('hidden');
+    chatMessages.classList.remove('hidden');
+    chatFooter.classList.remove('hidden');
+    backToRoomsBtn.classList.remove('hidden');
+    
+    // Show chat tools when in a room
+    onlineCount.classList.remove('hidden');
+    statusDot.classList.remove('hidden');
+    showUsersBtn.classList.remove('hidden');
+    
+    chatMessages.innerHTML = ''; // Clear messages from previous room
+    scrollToBottom();
+});
+
+function renderRoomList(rooms) {
+    console.log('Rendering room list, count:', rooms.length);
+    if (!roomList) {
+        console.error('roomList element not found!');
+        return;
+    }
+    roomList.innerHTML = '';
+    rooms.forEach(room => {
+        const card = document.createElement('div');
+        card.className = 'room-card';
+        card.innerHTML = `
+            <h3>${room.name}</h3>
+            <p>Created by: ${room.createdBy}</p>
+            <div class="room-stats">
+                <span class="member-badge">${room.members} members</span>
+                <button class="join-btn-small">Join</button>
+            </div>
+        `;
+        card.onclick = () => {
+            console.log('Joining room:', room.name);
+            socket.emit('join_room', room.name);
+        };
+        roomList.appendChild(card);
+    });
+}
 
 // Image handling
 imgBtn.addEventListener('click', () => imageInput.click());
@@ -228,9 +367,20 @@ socket.on('user_list', (users) => {
 
 // Helper functions
 function appendMessage(data) {
+    // Only show messages for the current room
+    if (data.room && data.room !== currentRoom) return;
+
+    // Prevent duplicates
+    const existing = document.querySelector(`[data-id="${data.id}"]`);
+    if (existing && !data.isPending) {
+        existing.classList.remove('pending');
+        return;
+    }
+
     const isSelf = data.user.username === currentUser;
     const div = document.createElement('div');
-    div.className = `message ${isSelf ? 'sent' : 'received'}`;
+    div.className = `message ${isSelf ? 'sent' : 'received'} ${data.isPending ? 'pending' : ''}`;
+    div.setAttribute('data-id', data.id);
     
     let content = '';
     if (data.text) {
