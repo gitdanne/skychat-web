@@ -14,8 +14,19 @@ const showUsersBtn = document.getElementById('show-users-btn');
 const closeUsersBtn = document.getElementById('close-users-btn');
 const imgBtn = document.getElementById('img-btn');
 const imageInput = document.getElementById('image-input');
+const micBtn = document.getElementById('mic-btn');
+const recordingStatus = document.getElementById('recording-status');
+const recordingTimer = document.getElementById('recording-timer');
+const audioPreview = document.getElementById('audio-preview');
+const previewPlayer = document.getElementById('preview-player');
+const deletePreview = document.getElementById('delete-preview');
 
 let currentUser = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingInterval = null;
+let recordingStartTime = 0;
+let pendingAudioData = null;
 
 // Login logic
 loginForm.addEventListener('submit', (e) => {
@@ -33,8 +44,15 @@ loginForm.addEventListener('submit', (e) => {
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = messageInput.value.trim();
-    if (text) {
+    
+    if (pendingAudioData) {
+        socket.emit('send_message', { text, audio: pendingAudioData });
+        clearPreview();
+    } else if (text) {
         socket.emit('send_message', { text });
+    }
+    
+    if (text) {
         messageInput.value = '';
         autoResize(messageInput);
     }
@@ -70,6 +88,91 @@ messageInput.addEventListener('input', () => {
 function autoResize(el) {
     el.style.height = 'auto';
     el.style.height = (el.scrollHeight) + 'px';
+}
+
+// Voice Recording Logic
+micBtn.addEventListener('click', async () => {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        startRecording();
+    } else {
+        stopRecording();
+    }
+});
+
+deletePreview.addEventListener('click', () => {
+    clearPreview();
+});
+
+function clearPreview() {
+    pendingAudioData = null;
+    audioPreview.classList.add('hidden');
+    previewPlayer.src = '';
+    // Restore layout if needed
+    messageInput.style.display = 'block';
+}
+
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Use a more standard mime type
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                         ? 'audio/webm;codecs=opus' 
+                         : 'audio/webm';
+                         
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        audioChunks = [];
+        clearPreview();
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            if (audioChunks.length === 0) {
+                console.error("No audio data captured.");
+                stopRecording();
+                return;
+            }
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingAudioData = e.target.result;
+                previewPlayer.src = pendingAudioData;
+                audioPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        recordingStartTime = Date.now();
+        recordingStatus.classList.remove('hidden');
+        micBtn.classList.add('recording');
+        micBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M6 6h12v12H6z"></path></svg>`; // Stop icon
+        
+        recordingInterval = setInterval(updateTimer, 100);
+    } catch (err) {
+        console.error("Error accessing microphone:", err);
+        alert("Could not access microphone.");
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        clearInterval(recordingInterval);
+        recordingStatus.classList.add('hidden');
+        micBtn.classList.remove('recording');
+        micBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>`; // Mic icon
+    }
+}
+
+function updateTimer() {
+    const elapsed = Date.now() - recordingStartTime;
+    const seconds = Math.floor(elapsed / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    recordingTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Receiving messages
@@ -113,6 +216,9 @@ function appendMessage(data) {
     }
     if (data.image) {
         content += `<img src="${data.image}" class="msg-img" onclick="window.open('${data.image}', '_blank')">`;
+    }
+    if (data.audio) {
+        content += `<audio controls src="${data.audio}" class="msg-audio"></audio>`;
     }
 
     div.innerHTML = `
