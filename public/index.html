@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkyChat - Fly into Conversation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="sky-background">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-container" class="glass-panel">
+        <div class="logo-area">
+            <div class="cloud-logo">☁️</div>
+            <h1>SkyChat</h1>
+            <p>Connect through the clouds</p>
+        </div>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Choose your nickname..." required maxlength="15">
+            <button type="submit">Join the Sky</button>
+        </form>
+    </div>
+
+    <!-- Main Chat Window -->
+    <div id="chat-container" class="glass-panel hidden">
+        <header>
+            <div class="header-logo">
+                <span class="logo-icon">☁️</span>
+                <span>SkyChat</span>
+            </div>
+            <div id="online-count" class="badge">0 Online</div>
+            <button id="show-users-btn">👥</button>
+        </header>
+
+        <aside id="user-list-panel" class="glass-panel hidden">
+            <h3>Online in Sky</h3>
+            <ul id="user-list"></ul>
+            <button id="close-users-btn">×</button>
+        </aside>
+
+        <main id="chat-messages">
+            <!-- Messages go here -->
+        </main>
+
+        <footer>
+            <form id="message-form">
+                <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" id="send-btn">
+                    <svg viewBox="0 0 24 24" class="send-icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
