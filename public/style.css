@@ -267,6 +267,17 @@ header {
     background: transparent;
 }
 
+.error-text {
+    font-size: 11px;
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+    padding: 6px 12px;
+    border-radius: 12px;
+    display: block;
+    margin-top: 8px;
+    font-weight: 600;
+}
+
 .system-msg {
     align-self: center;
     font-size: 12px;

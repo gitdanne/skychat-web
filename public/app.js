@@ -46,6 +46,7 @@ messageForm.addEventListener('submit', (e) => {
     const text = messageInput.value.trim();
     
     if (pendingAudioData) {
+        console.log(`Sending audio message, size: ${Math.round(pendingAudioData.length / 1024)} KB`);
         socket.emit('send_message', { text, audio: pendingAudioData });
         clearPreview();
     } else if (text) {
@@ -134,6 +135,8 @@ async function startRecording() {
                 return;
             }
             const audioBlob = new Blob(audioChunks, { type: mimeType });
+            console.log(`Recording stopped. Blob size: ${Math.round(audioBlob.size / 1024)} KB, type: ${mimeType}`);
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 pendingAudioData = e.target.result;
@@ -218,7 +221,13 @@ function appendMessage(data) {
         content += `<img src="${data.image}" class="msg-img" onclick="window.open('${data.image}', '_blank')">`;
     }
     if (data.audio) {
-        content += `<audio controls src="${data.audio}" class="msg-audio"></audio>`;
+        content += `
+            <div class="audio-container">
+                <audio controls src="${data.audio}" class="msg-audio" preload="metadata" 
+                    onerror="this.parentElement.innerHTML='<span class=\'error-text\'>⚠️ Audio playback error</span>'">
+                </audio>
+            </div>
+        `;
     }
 
     div.innerHTML = `
