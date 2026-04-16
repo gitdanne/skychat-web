@@ -190,6 +190,28 @@ socket.on('room_closed', (data) => {
     }
 });
 
+socket.on('room_users', (users) => {
+    console.log('Received room users:', users);
+    userList.innerHTML = '';
+    users.forEach(user => {
+        const li = document.createElement('li');
+        li.className = 'user-item';
+        li.innerHTML = `
+            <img src="${user.avatar}" class="avatar">
+            <span>${user.username}</span>
+        `;
+        userList.appendChild(li);
+    });
+});
+
+socket.on('load_history', (history) => {
+    console.log('Loading history, count:', history.length);
+    chatMessages.innerHTML = '';
+    history.forEach(msg => {
+        appendMessage(msg);
+    });
+});
+
 function renderRoomList(rooms) {
     console.log('Rendering room list, count:', rooms.length);
     if (!roomList) {
@@ -228,9 +250,13 @@ imageInput.addEventListener('change', (e) => {
         }
         const reader = new FileReader();
         reader.onload = (event) => {
+            if (!currentRoom) return;
+            const tempId = 'img_' + Date.now();
             socket.emit('send_message', { 
+                id: tempId,
                 text: '', 
-                image: event.target.result 
+                image: event.target.result,
+                room: currentRoom
             });
             imageInput.value = '';
         };
@@ -370,18 +396,8 @@ socket.on('system_message', (data) => {
 
 // Update online count (Global - we'll keep this purely for the Users Panel if needed, 
 // but header badge now shows room-specific count)
-socket.on('user_list', (users) => {
-    // onlineCount.textContent = `${users.length} Online`; // Header badge is room-specific now
-    userList.innerHTML = '';
-    users.forEach(user => {
-        const li = document.createElement('li');
-        li.className = 'user-item';
-        li.innerHTML = `
-            <img src="${user.avatar}" class="avatar">
-            <span>${user.username}</span>
-        `;
-        userList.innerHTML += li.outerHTML;
-    });
+socket.on('online_count_update', (count) => {
+    console.log('Global online users:', count);
 });
 
 // Helper functions

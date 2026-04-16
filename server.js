@@ -22,10 +22,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Store connected users and rooms
 let users = {};
 let rooms = {
-  "General": { name: "General", createdBy: "System", members: 0, isSystem: true },
-  "Tech Talk": { name: "Tech Talk", createdBy: "System", members: 0, isSystem: true },
-  "Music": { name: "Music", createdBy: "System", members: 0, isSystem: true }
+  "General": { name: "General", createdBy: "System", members: 0, isSystem: true, messages: [] },
+  "Tech Talk": { name: "Tech Talk", createdBy: "System", members: 0, isSystem: true, messages: [] },
+  "Music": { name: "Music", createdBy: "System", members: 0, isSystem: true, messages: [] }
 };
+
+// Map to track which room each socket is in
+let socketToRoom = {};
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -36,6 +39,9 @@ io.on('connection', (socket) => {
       username: username,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
     };
+    
+    // Broadcast global online count (if needed)
+    io.emit('online_count_update', Object.keys(users).length);
     
     // Send room list once logged in
     socket.emit('room_list', Object.values(rooms));
@@ -52,11 +58,28 @@ io.on('connection', (socket) => {
         createdBy: users[socket.id]?.username || "Unknown",
         ownerId: socket.id,
         members: 0,
-        isSystem: false
+        isSystem: false,
+        messages: []
       };
       io.emit('room_list', Object.values(rooms));
     }
   });
+
+  const updateRoomUsers = (roomName) => {
+    if (!rooms[roomName]) return;
+    
+    // Get all socket IDs in the room
+    const room = io.sockets.adapter.rooms.get(roomName);
+    const roomUserList = [];
+    if (room) {
+      for (const socketId of room) {
+        if (users[socketId]) {
+          roomUserList.push(users[socketId]);
+        }
+      }
+    }
+    io.to(roomName).emit('room_users', roomUserList);
+  };
 
   socket.on('join_room', (roomName) => {
     const previousRoom = currentRoom;
@@ -74,13 +97,22 @@ io.on('connection', (socket) => {
             text: `${users[socket.id]?.username} left the room`,
             type: 'leave'
           });
+          // Update user list for people staying in the old room
+          updateRoomUsers(previousRoom);
         }
       }
     }
     
     socket.join(roomName);
     currentRoom = roomName;
-    if (rooms[roomName]) rooms[roomName].members++;
+    socketToRoom[socket.id] = roomName;
+
+    if (rooms[roomName]) {
+      rooms[roomName].members++;
+      
+      // Send history
+      socket.emit('load_history', rooms[roomName].messages);
+    }
     
     // Broadcast updated list to everyone (counts changed)
     io.emit('room_list', Object.values(rooms));
@@ -92,10 +124,15 @@ io.on('connection', (socket) => {
     });
     
     socket.emit('room_joined', rooms[roomName]);
+    
+    // Update user list for the new room
+    updateRoomUsers(roomName);
   });
 
   socket.on('send_message', (data, callback) => {
     try {
+      if (!data.room || !rooms[data.room]) return;
+
       const messageData = {
         user: users[socket.id],
         text: data.text,
@@ -106,6 +143,12 @@ io.on('connection', (socket) => {
         id: data.id || Date.now()
       };
       
+      // Save to history (limit to last 50)
+      rooms[data.room].messages.push(messageData);
+      if (rooms[data.room].messages.length > 50) {
+        rooms[data.room].messages.shift();
+      }
+
       // Emit ONLY to the specific room
       io.to(data.room).emit('receive_message', messageData);
       
@@ -123,7 +166,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (users[socket.id]) {
       const username = users[socket.id].username;
-      
+      const roomToUpdate = currentRoom;
+
       if (currentRoom && rooms[currentRoom]) {
         rooms[currentRoom].members--;
         
@@ -136,10 +180,13 @@ io.on('connection', (socket) => {
             text: `${username} left the room`,
             type: 'leave'
           });
+          // Update room user list
+          updateRoomUsers(roomToUpdate);
         }
       }
       
       delete users[socket.id];
+      delete socketToRoom[socket.id];
       io.emit('room_list', Object.values(rooms));
     }
     console.log('User disconnected');
