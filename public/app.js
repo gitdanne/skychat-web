@@ -178,6 +178,25 @@ function updateTimer() {
     recordingTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Socket Connection Status
+const statusDot = document.getElementById('status-dot');
+
+socket.on('connect', () => {
+    statusDot.className = 'status-dot online';
+    statusDot.title = 'Connected';
+    sendBtn.disabled = false;
+});
+
+socket.on('disconnect', () => {
+    statusDot.className = 'status-dot offline';
+    statusDot.title = 'Disconnected - reconnecting...';
+    sendBtn.disabled = true;
+});
+
+socket.on('reconnect_attempt', () => {
+    statusDot.className = 'status-dot connecting';
+});
+
 // Receiving messages
 socket.on('receive_message', (data) => {
     appendMessage(data);

@@ -11,7 +11,9 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST"]
   },
-  maxHttpBufferSize: 1e7 // 10MB limit for audio/image data
+  maxHttpBufferSize: 1e7, // 10MB limit for audio/image data
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 app.use(cors());
