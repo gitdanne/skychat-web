@@ -42,6 +42,7 @@ io.on('connection', (socket) => {
     const messageData = {
       user: users[socket.id],
       text: data.text,
+      image: data.image,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       id: Date.now()
     };

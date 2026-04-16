@@ -12,6 +12,8 @@ const userList = document.getElementById('user-list');
 const userListPanel = document.getElementById('user-list-panel');
 const showUsersBtn = document.getElementById('show-users-btn');
 const closeUsersBtn = document.getElementById('close-users-btn');
+const imgBtn = document.getElementById('img-btn');
+const imageInput = document.getElementById('image-input');
 
 let currentUser = null;
 
@@ -34,8 +36,41 @@ messageForm.addEventListener('submit', (e) => {
     if (text) {
         socket.emit('send_message', { text });
         messageInput.value = '';
+        autoResize(messageInput);
     }
 });
+
+// Image handling
+imgBtn.addEventListener('click', () => imageInput.click());
+
+imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image is too large (max 5MB)');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            socket.emit('send_message', { 
+                text: '', 
+                image: event.target.result 
+            });
+            imageInput.value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Auto-resize textarea
+messageInput.addEventListener('input', () => {
+    autoResize(messageInput);
+});
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight) + 'px';
+}
 
 // Receiving messages
 socket.on('receive_message', (data) => {
@@ -72,12 +107,20 @@ function appendMessage(data) {
     const div = document.createElement('div');
     div.className = `message ${isSelf ? 'sent' : 'received'}`;
     
+    let content = '';
+    if (data.text) {
+        content += `<div class="msg-body">${data.text}</div>`;
+    }
+    if (data.image) {
+        content += `<img src="${data.image}" class="msg-img" onclick="window.open('${data.image}', '_blank')">`;
+    }
+
     div.innerHTML = `
         <div class="msg-header">
             <span>${isSelf ? 'You' : data.user.username}</span>
             <span class="msg-time">${data.time}</span>
         </div>
-        <div class="msg-body">${data.text}</div>
+        ${content}
     `;
     
     messagesDisplay.appendChild(div);
@@ -97,8 +140,8 @@ closeUsersBtn.addEventListener('click', () => {
     userListPanel.classList.add('hidden');
 });
 
-// Handle enter key in messages
-messageInput.addEventListener('keypress', (e) => {
+// Handle keyboard in textarea
+messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         messageForm.dispatchEvent(new Event('submit'));

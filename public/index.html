@@ -52,7 +52,11 @@
 
         <footer>
             <form id="message-form">
-                <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+                <input type="file" id="image-input" accept="image/*" class="hidden">
+                <button type="button" id="img-btn" class="secondary-btn">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg>
+                </button>
+                <textarea id="message-input" placeholder="Type a message..." rows="1" autocomplete="off"></textarea>
                 <button type="submit" id="send-btn">
                     <svg viewBox="0 0 24 24" class="send-icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
