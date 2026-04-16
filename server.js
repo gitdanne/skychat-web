@@ -22,9 +22,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Store connected users and rooms
 let users = {};
 let rooms = {
-  "General": { name: "General", createdBy: "System", members: 0 },
-  "Tech Talk": { name: "Tech Talk", createdBy: "System", members: 0 },
-  "Music": { name: "Music", createdBy: "System", members: 0 }
+  "General": { name: "General", createdBy: "System", members: 0, isSystem: true },
+  "Tech Talk": { name: "Tech Talk", createdBy: "System", members: 0, isSystem: true },
+  "Music": { name: "Music", createdBy: "System", members: 0, isSystem: true }
 };
 
 io.on('connection', (socket) => {
@@ -50,23 +50,39 @@ io.on('connection', (socket) => {
       rooms[roomName] = { 
         name: roomName, 
         createdBy: users[socket.id]?.username || "Unknown",
-        members: 0 
+        ownerId: socket.id,
+        members: 0,
+        isSystem: false
       };
       io.emit('room_list', Object.values(rooms));
     }
   });
 
   socket.on('join_room', (roomName) => {
-    if (currentRoom) {
-      socket.leave(currentRoom);
-      if (rooms[currentRoom]) rooms[currentRoom].members--;
+    const previousRoom = currentRoom;
+    if (previousRoom) {
+      socket.leave(previousRoom);
+      if (rooms[previousRoom]) {
+        rooms[previousRoom].members--;
+        
+        // If owner leaves their own room, close it
+        if (rooms[previousRoom].ownerId === socket.id && !rooms[previousRoom].isSystem) {
+          io.to(previousRoom).emit('room_closed', { room: previousRoom });
+          delete rooms[previousRoom];
+        } else {
+          socket.to(previousRoom).emit('system_message', {
+            text: `${users[socket.id]?.username} left the room`,
+            type: 'leave'
+          });
+        }
+      }
     }
     
     socket.join(roomName);
     currentRoom = roomName;
     if (rooms[roomName]) rooms[roomName].members++;
     
-    // Broadcast updated member counts
+    // Broadcast updated list to everyone (counts changed)
     io.emit('room_list', Object.values(rooms));
     
     // Notify room members
@@ -107,13 +123,22 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (users[socket.id]) {
       const username = users[socket.id].username;
+      
       if (currentRoom && rooms[currentRoom]) {
         rooms[currentRoom].members--;
-        socket.to(currentRoom).emit('system_message', {
-          text: `${username} left the room`,
-          type: 'leave'
-        });
+        
+        // If owner disconnects, close the room
+        if (rooms[currentRoom].ownerId === socket.id && !rooms[currentRoom].isSystem) {
+          io.to(currentRoom).emit('room_closed', { room: currentRoom });
+          delete rooms[currentRoom];
+        } else {
+          socket.to(currentRoom).emit('system_message', {
+            text: `${username} left the room`,
+            type: 'leave'
+          });
+        }
       }
+      
       delete users[socket.id];
       io.emit('room_list', Object.values(rooms));
     }

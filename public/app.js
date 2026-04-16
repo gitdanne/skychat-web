@@ -152,6 +152,14 @@ backToRoomsBtn.addEventListener('click', () => {
 socket.on('room_list', (rooms) => {
     console.log('Received room list:', rooms);
     renderRoomList(rooms);
+    
+    // Update current room's member count if we are in one
+    if (currentRoom) {
+        const myRoom = rooms.find(r => r.name === currentRoom);
+        if (myRoom) {
+            onlineCount.textContent = `${myRoom.members} Online`;
+        }
+    }
 });
 
 socket.on('room_joined', (room) => {
@@ -168,8 +176,18 @@ socket.on('room_joined', (room) => {
     statusDot.classList.remove('hidden');
     showUsersBtn.classList.remove('hidden');
     
+    // Set initial count
+    onlineCount.textContent = `${room.members} Online`;
+    
     chatMessages.innerHTML = ''; // Clear messages from previous room
     scrollToBottom();
+});
+
+socket.on('room_closed', (data) => {
+    if (currentRoom === data.room) {
+        alert('This room has been closed by the author.');
+        backToRoomsBtn.click();
+    }
 });
 
 function renderRoomList(rooms) {
@@ -350,9 +368,10 @@ socket.on('system_message', (data) => {
     scrollToBottom();
 });
 
-// Update online count and list
+// Update online count (Global - we'll keep this purely for the Users Panel if needed, 
+// but header badge now shows room-specific count)
 socket.on('user_list', (users) => {
-    onlineCount.textContent = `${users.length} Online`;
+    // onlineCount.textContent = `${users.length} Online`; // Header badge is room-specific now
     userList.innerHTML = '';
     users.forEach(user => {
         const li = document.createElement('li');
