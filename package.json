@@ -1,19 +1,19 @@
 {
-  "name": "simple-messenger",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "skychat-web",
+  "version": "2.0.0",
+  "description": "SkyChat — Real-time chat application",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && node index.js",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && node index.js",
+    "install:all": "cd server && npm install && cd ../client && npm install"
   },
-  "keywords": [],
+  "keywords": ["chat", "realtime", "socket.io"],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "localtunnel": "^2.0.2",
-    "socket.io": "^4.8.3"
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

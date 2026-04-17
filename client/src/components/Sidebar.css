@@ -1,0 +1,312 @@
+/* ── Sidebar ────────────────────────────────────────────────── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  position: relative;
+  z-index: 30;
+  flex-shrink: 0;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity var(--duration-fast);
+}
+
+.sidebar__logo:hover {
+  opacity: 0.8;
+}
+
+.sidebar__brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3a9fff, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar__close {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.sidebar__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+/* ── Sections ───────────────────────────────────────────────── */
+
+.sidebar__section {
+  padding: 16px 12px 8px;
+}
+
+.sidebar__section--scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+.sidebar__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  padding: 0 8px;
+}
+
+.sidebar__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.sidebar__section-header .sidebar__label {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.sidebar__add-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: all var(--duration-fast);
+}
+
+.sidebar__add-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent-hover);
+}
+
+/* ── Room list ──────────────────────────────────────────────── */
+
+.sidebar__rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__room {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease-out);
+  color: var(--text-secondary);
+}
+
+.sidebar__room:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.sidebar__room--active {
+  background: rgba(10, 124, 255, 0.12);
+  color: var(--text-primary);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.sidebar__room-icon {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar__room-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__room-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.sidebar__empty {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ── Search ─────────────────────────────────────────────────── */
+
+.sidebar__search {
+  padding: 0 12px 8px;
+  position: relative;
+}
+
+.sidebar__search-icon {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(calc(-50% - 4px));
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.sidebar__search-input {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  transition: border-color var(--duration-fast);
+}
+
+.sidebar__search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.sidebar__search-input:focus {
+  border-color: var(--border-active);
+}
+
+/* ── Footer / User ──────────────────────────────────────────── */
+
+.sidebar__footer {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+
+.sidebar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--sky-500), var(--purple-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sidebar__user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar__username {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__role {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.sidebar__logout {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: all var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.sidebar__logout:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red-400);
+}
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+
+.sidebar__overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform var(--duration-normal) var(--ease-out);
+    z-index: 100;
+    width: 85vw;
+    max-width: 360px;
+  }
+
+  .sidebar--open {
+    transform: translateX(0);
+  }
+
+  .sidebar__close {
+    display: flex;
+  }
+
+  .sidebar__overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

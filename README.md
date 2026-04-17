@@ -1,36 +1,68 @@
-# ☁️ SkyChat Web
+# ☁️ SkyChat
 
-A modern, real-time messenger built with Node.js and Socket.io. This version is optimized for web deployment (e.g., Render, Railway, Fly.io).
+Real-time chat application with rooms, JWT authentication, and admin controls.
 
-## Features
-- **Real-time Chat**: Instant messaging for multiple users.
-- **Presence List**: See who is currently online.
-- **Responsive Design**: Looks great on mobile browsers and desktops.
-- **Glassmorphism UI**: Beautiful, premium aesthetic with smooth animations.
+## Tech Stack
 
-## Local Development
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the server:
-   ```bash
-   node server.js
-   ```
-3. Open [http://localhost:3000](http://localhost:3000)
+- **Frontend:** React + React Router + Vite
+- **Backend:** Node.js + Express
+- **Realtime:** Socket.io
+- **Auth:** JWT (jsonwebtoken + bcryptjs)
+- **Storage:** In-memory (session-level persistence)
 
-## Global Access (Development)
-To let friends connect to your local PC:
+## Getting Started
+
 ```bash
-node start-public.js
+# Install all dependencies
+npm run install:all
+
+# Also install root dependencies
+npm install
+
+# Start development (server + client)
+npm run dev
 ```
 
-## Production Deployment (Recommended: Render.com)
-1. Push this code to a **GitHub repository**.
-2. Connect the repository to **Render.com** (choose "Web Service").
-3. Set the Build Command to `npm install`.
-4. Set the Start Command to `node server.js`.
-5. Your app will be live on a `*.onrender.com` URL!
+- **Client:** http://localhost:5173
+- **Server API:** http://localhost:3001
 
----
-*Created with ❤️ by SkyChat Team*
+## Admin Account
+
+- **Username:** `admin`
+- **Password:** `admin123`
+
+Admin can clear all messages in any room.
+
+## Features
+
+- ✅ Register / Login with JWT
+- ✅ Auto-login on refresh
+- ✅ Global rooms (General, Tech Talk, Music)
+- ✅ Custom rooms with optional passwords
+- ✅ Real-time messaging via Socket.io
+- ✅ Delete own messages
+- ✅ Admin: clear entire chat room
+- ✅ Ping indicator with color-coded latency
+- ✅ Session-level message persistence
+- ✅ Responsive design
+
+## API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | /api/auth/register | No | Register new user |
+| POST | /api/auth/login | No | Login |
+| GET | /api/auth/me | Yes | Verify token |
+| GET | /api/rooms | Yes | List all rooms |
+| POST | /api/rooms | Yes | Create custom room |
+| GET | /api/rooms/:id/messages | Yes | Get room messages |
+| DELETE | /api/messages/:id | Yes | Delete own message |
+| DELETE | /api/rooms/:id/messages | Admin | Clear room messages |
+| GET | /api/ping | No | Health check |
+
+## Production
+
+```bash
+npm run build
+npm start
+```
