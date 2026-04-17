@@ -20,16 +20,6 @@ npm run install:all
 npm install
 
 # Start development (server + client)
-npm run dev
-```
-
-- **Client:** http://localhost:5173
-- **Server API:** http://localhost:3001
-
-## Admin Account
-
-- **Username:** `admin`
-- **Password:** `admin123`
 
 Admin can clear all messages in any room.
 
