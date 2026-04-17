@@ -111,9 +111,9 @@ export default function ChatPage() {
     };
   }, [socket, roomId]);
 
-  const handleSendMessage = (text) => {
+  const handleSendMessage = (payload) => {
     if (!socket || !roomId) return;
-    socket.emit('sendMessage', { roomId, text });
+    socket.emit('sendMessage', { roomId, ...payload });
   };
 
   const handleDeleteMessage = (messageId) => {

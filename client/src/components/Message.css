@@ -3,8 +3,9 @@
 .msg {
   display: flex;
   gap: 8px;
-  max-width: 75%;
+  max-width: 70%;
   animation: msgIn 0.25s var(--ease-out) both;
+  position: relative;
 }
 
 @keyframes msgIn {
@@ -50,6 +51,11 @@
   justify-content: flex-end;
 }
 
+.msg--own .msg__reply-block {
+  border-left-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ── Other messages ─────────────────────────────────────────── */
 
 .msg--other {
@@ -86,6 +92,7 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  width: 100%;
 }
 
 .msg__meta {
@@ -107,7 +114,7 @@
   font-family: var(--font-mono);
 }
 
-.msg__delete {
+.msg__delete, .msg__reply-btn {
   opacity: 0;
   width: 22px;
   height: 22px;
@@ -117,9 +124,12 @@
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   transition: all var(--duration-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
 }
 
-.msg:hover .msg__delete {
+.msg:hover .msg__delete, .msg:hover .msg__reply-btn {
   opacity: 1;
 }
 
@@ -128,11 +138,20 @@
   color: var(--red-400);
 }
 
+.msg__reply-btn:hover {
+  background: rgba(10, 124, 255, 0.15);
+  color: var(--sky-400);
+}
+
 /* ── Bubble ─────────────────────────────────────────────────── */
 
 .msg__bubble {
   padding: 10px 14px;
   border-radius: var(--radius-md);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .msg__text {
@@ -142,15 +161,75 @@
   white-space: pre-wrap;
 }
 
-/* ── Deleted ────────────────────────────────────────────────── */
+/* ── Reply Block ────────────────────────────────────────────── */
 
-.msg--deleted .msg__bubble {
-  opacity: 0.5;
+.msg__reply-block {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-left: 3px solid var(--sky-400);
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
 }
 
-.msg--deleted .msg__text {
-  font-style: italic;
-  color: var(--text-muted);
+.msg__reply-block:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.msg__reply-author {
+  font-weight: 600;
+  color: var(--sky-300);
+  font-size: 0.75rem;
+}
+
+.msg__reply-text {
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Media ──────────────────────────────────────────────────── */
+
+.msg__image {
+  max-width: 100%;
+  border-radius: 4px;
+  object-fit: contain;
+  cursor: pointer;
+  display: block;
+}
+
+.msg__audio {
+  max-width: 100%;
+  height: 40px;
+  border-radius: 20px;
+  outline: none;
+}
+
+/* ── Highlight Target ───────────────────────────────────────── */
+
+@keyframes pulseHighlight {
+  0%, 100% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.3); transform: scale(1.02); }
+}
+.msg--highlighted .msg__bubble {
+  animation: pulseHighlight 1s ease-in-out;
+}
+
+/* ── Swipe Support ──────────────────────────────────────────── */
+
+.msg__swipe-wrapper {
+  display: inherit;
+  gap: inherit;
+  flex-direction: inherit;
+  width: 100%;
+  transition: transform 0.2s ease-out;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -160,7 +239,8 @@
     max-width: 85%;
   }
 
-  .msg__delete {
+  .msg__delete, .msg__reply-btn {
     opacity: 1;
   }
 }
+

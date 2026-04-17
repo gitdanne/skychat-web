@@ -178,6 +178,141 @@
   font-size: 0.9rem;
 }
 
+.chat-area__input-wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-area__reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.4);
+  border-left: 3px solid var(--sky-400);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  margin-bottom: 4px;
+}
+
+.chat-area__reply-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-area__reply-content strong {
+  font-size: 0.8rem;
+  color: var(--sky-400);
+}
+
+.chat-area__reply-content p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-area__reply-cancel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.chat-area__reply-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.chat-area__attach, .chat-area__mic {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-area__attach:hover:not(:disabled), .chat-area__mic:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--sky-400);
+}
+
+.chat-area__attach:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-area__recording {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 0 12px;
+}
+
+.recording-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--red-400);
+  animation: pulseMic 1.5s infinite;
+}
+
+.recording-time {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.recording-cancel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: auto;
+}
+.recording-cancel:hover {
+  color: var(--red-400);
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
 /* ── Input ──────────────────────────────────────────────────── */
 
 .chat-area__input {

@@ -73,8 +73,9 @@ function setupSocket(io) {
     });
 
     // ── Send Message ────────────────────────────────────
-    socket.on('sendMessage', ({ roomId, text }) => {
-      if (!text || !text.trim() || !roomId) return;
+    socket.on('sendMessage', ({ roomId, text, type, fileUrl, replyTo }) => {
+      if (!roomId) return;
+      if (type === 'text' && (!text || !text.trim())) return;
 
       const room = getRoom(roomId);
       if (!room) return;
@@ -83,7 +84,10 @@ function setupSocket(io) {
         roomId,
         userId: socket.user.id,
         username: socket.user.username,
-        text: text.trim(),
+        text: type === 'text' ? text.trim() : (text || ''),
+        type,
+        fileUrl,
+        replyTo
       });
 
       io.to(roomId).emit('receiveMessage', msg);

@@ -30,10 +30,19 @@ app.get('/api/ping', (req, res) => {
   res.json({ pong: true, time: Date.now() });
 });
 
+const uploadRoutes = require('./routes/upload');
+const userRoutes = require('./routes/users');
+
 // ── API Routes ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api', messageRoutes);
+
+// ── Serve Uploads ─────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // ── Serve React build in production ───────────────────────────
 const clientDist = path.join(__dirname, '..', 'client', 'dist');

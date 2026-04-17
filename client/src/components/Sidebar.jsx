@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import CreateRoomModal from './CreateRoomModal';
 import PasswordModal from './PasswordModal';
 import './Sidebar.css';
@@ -22,6 +22,8 @@ export default function Sidebar({
   onLogout,
 }) {
   const [search, setSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [searchedUsers, setSearchedUsers] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [passwordRoom, setPasswordRoom] = useState(null);
 
@@ -33,10 +35,36 @@ export default function Sidebar({
   const customRooms = useMemo(
     () =>
       rooms
-        .filter((r) => !r.isGlobal)
+        .filter((r) => !r.isGlobal && !r.id.startsWith('dm_'))
         .filter((r) => r.name.toLowerCase().includes(search.toLowerCase())),
     [rooms, search]
   );
+  
+  const dmRooms = useMemo(
+    () => rooms.filter((r) => r.id.startsWith('dm_')),
+    [rooms]
+  );
+
+  useEffect(() => {
+    if (!userSearch.trim()) {
+      setSearchedUsers([]);
+      return;
+    }
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(userSearch)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSearchedUsers(data.users || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [userSearch, token]);
 
   const handleRoomClick = (room) => {
     if (room.hasPassword && room.id !== currentRoomId) {
@@ -44,6 +72,13 @@ export default function Sidebar({
     } else {
       onSelectRoom(room.id);
     }
+  };
+
+  const handleUserClick = (targetUser) => {
+    const ids = [user.id, targetUser.id].sort();
+    const dmRoomId = `dm_${ids[0]}_${ids[1]}`;
+    onSelectRoom(dmRoomId);
+    setUserSearch('');
   };
 
   const handlePasswordSuccess = () => {
@@ -95,57 +130,112 @@ export default function Sidebar({
             ))}
           </ul>
         </div>
-
-        {/* Search */}
-        <div className="sidebar__search">
-          <svg className="sidebar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search rooms..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sidebar__search-input"
-          />
+        
+        {/* Search Layout */}
+        <div className="sidebar__search-layout">
+          <div className="sidebar__search">
+            <svg className="sidebar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search rooms..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="sidebar__search-input"
+            />
+          </div>
+          
+          <div className="sidebar__search">
+            <svg className="sidebar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="sidebar__search-input"
+            />
+          </div>
         </div>
 
-        {/* Custom Rooms */}
-        <div className="sidebar__section sidebar__section--scroll">
-          <div className="sidebar__section-header">
-            <h3 className="sidebar__label">Custom Rooms</h3>
-            <button
-              className="sidebar__add-btn"
-              onClick={() => setShowCreate(true)}
-              title="Create room"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
-          </div>
-          <ul className="sidebar__rooms">
-            {customRooms.length === 0 && (
-              <li className="sidebar__empty">
-                {search ? 'No rooms found' : 'No custom rooms yet'}
-              </li>
-            )}
-            {customRooms.map((room) => (
-              <li key={room.id}>
+        <div className="sidebar__scrollable">
+          {searchedUsers.length > 0 && (
+            <div className="sidebar__section">
+              <h3 className="sidebar__label">Users Found</h3>
+              <ul className="sidebar__rooms">
+                {searchedUsers.map((u) => (
+                  <li key={u.id}>
+                    <button className="sidebar__room" onClick={() => handleUserClick(u)}>
+                      <span className="sidebar__room-icon">👤</span>
+                      <span className="sidebar__room-name">{u.username}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {dmRooms.length > 0 && !userSearch && (
+            <div className="sidebar__section">
+              <h3 className="sidebar__label">Direct Messages</h3>
+              <ul className="sidebar__rooms">
+                {dmRooms.map((room) => (
+                  <li key={room.id}>
+                    <button
+                      className={`sidebar__room ${room.id === currentRoomId ? 'sidebar__room--active' : ''}`}
+                      onClick={() => handleRoomClick(room)}
+                    >
+                      <span className="sidebar__room-icon">💬</span>
+                      <span className="sidebar__room-name">DM Channel</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Custom Rooms */}
+          {!userSearch && (
+            <div className="sidebar__section sidebar__section--scroll">
+              <div className="sidebar__section-header">
+                <h3 className="sidebar__label">Custom Rooms</h3>
                 <button
-                  className={`sidebar__room ${room.id === currentRoomId ? 'sidebar__room--active' : ''}`}
-                  onClick={() => handleRoomClick(room)}
+                  className="sidebar__add-btn"
+                  onClick={() => setShowCreate(true)}
+                  title="Create room"
                 >
-                  <span className="sidebar__room-icon">
-                    {room.hasPassword ? '🔒' : '#'}
-                  </span>
-                  <span className="sidebar__room-name">{room.name}</span>
-                  <span className="sidebar__room-meta">by {room.createdBy}</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
                 </button>
-              </li>
-            ))}
-          </ul>
+              </div>
+              <ul className="sidebar__rooms">
+                {customRooms.length === 0 && (
+                  <li className="sidebar__empty">
+                    {search ? 'No rooms found' : 'No custom rooms yet'}
+                  </li>
+                )}
+                {customRooms.map((room) => (
+                  <li key={room.id}>
+                    <button
+                      className={`sidebar__room ${room.id === currentRoomId ? 'sidebar__room--active' : ''}`}
+                      onClick={() => handleRoomClick(room)}
+                    >
+                      <span className="sidebar__room-icon">
+                        {room.hasPassword ? '🔒' : '#'}
+                      </span>
+                      <span className="sidebar__room-name">{room.name}</span>
+                      <span className="sidebar__room-meta">by {room.createdBy}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* User info */}

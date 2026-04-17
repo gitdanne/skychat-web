@@ -108,6 +108,55 @@
   color: var(--accent-hover);
 }
 
+/* ── Search ─────────────────────────────────────────────────── */
+
+.sidebar__search-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.sidebar__search:focus-within {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(10, 124, 255, 0.3);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.sidebar__search-icon {
+  color: var(--text-muted);
+}
+
+.sidebar__search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.sidebar__search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.sidebar__scrollable {
+  flex: 1;
+  overflow-y: auto;
+}
+
 /* ── Room list ──────────────────────────────────────────────── */
 
 .sidebar__rooms {
