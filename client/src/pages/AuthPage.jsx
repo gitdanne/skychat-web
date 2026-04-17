@@ -35,12 +35,13 @@ export default function AuthPage() {
         <div className="sky-bg__aurora" />
       </div>
 
-      {/* Floating clouds */}
-      <div className="clouds">
-        <div className="cloud cloud--1">☁️</div>
-        <div className="cloud cloud--2">☁️</div>
-        <div className="cloud cloud--3">⛅</div>
-        <div className="cloud cloud--4">☁️</div>
+      {/* Passing blurred clouds */}
+      <div className="clouds-bg">
+        <div className="blur-cloud blur-cloud--1"></div>
+        <div className="blur-cloud blur-cloud--2"></div>
+        <div className="blur-cloud blur-cloud--3"></div>
+        <div className="blur-cloud blur-cloud--4"></div>
+        <div className="blur-cloud blur-cloud--5"></div>
       </div>
 
       {/* Stars */}
@@ -61,19 +62,23 @@ export default function AuthPage() {
 
       <div className="auth-card glass">
         <div className="auth-card__logo">
-          <div className="auth-card__icon">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <defs>
-                <linearGradient id="skyGrad" x1="0" y1="0" x2="48" y2="48">
-                  <stop offset="0%" stopColor="#3a9fff" />
-                  <stop offset="100%" stopColor="#a855f7" />
-                </linearGradient>
-              </defs>
-              <path d="M24 4C14 4 6 12 6 22c0 4 1.5 7.5 4 10.5L8 42l8-4c2.5 1 5.2 1.5 8 1.5 10 0 18-8 18-18S34 4 24 4z" fill="url(#skyGrad)" opacity="0.9"/>
-              <circle cx="16" cy="22" r="2.5" fill="white" opacity="0.9"/>
-              <circle cx="24" cy="22" r="2.5" fill="white" opacity="0.9"/>
-              <circle cx="32" cy="22" r="2.5" fill="white" opacity="0.9"/>
-            </svg>
+          <div className="auth-card__icon-container">
+            <div className="cloud-3d">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className={`cloud-layer cloud-layer--${i + 1}`} viewBox="0 0 100 100" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id={`cloudGrad${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="100%" stopColor="#b8dbff" />
+                    </linearGradient>
+                  </defs>
+                  <path 
+                    d="M75,60 C85,60 90,52 90,44 C90,36 84,30 76,30 C74,20 65,15 55,15 C45,15 37,22 34,30 C24,30 15,36 15,46 C15,56 24,60 33,60 L75,60 Z" 
+                    fill={`url(#cloudGrad${i})`} 
+                  />
+                </svg>
+              ))}
+            </div>
           </div>
           <h1 className="auth-card__title">SkyChat</h1>
           <p className="auth-card__subtitle">Connect through the clouds</p>
